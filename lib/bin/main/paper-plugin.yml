@@ -1,0 +1,8 @@
+name: LoginPlugin
+version: 1.0.1
+api-version: '1.21'
+author: MyNamePikaPuka
+description: A simple login plugin for PaperMC
+
+main: com.example.loginplugin.LoginPlugin
+bootstrapper: com.example.loginplugin.PluginBootstrap

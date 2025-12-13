@@ -1,0 +1,34 @@
+# ===========================
+# Login Plugin Configuration
+# ===========================
+
+messages:
+  not_logged_in: "&cYou must login first: /login <code>"
+  login_prompt: "&ePlease login: /login <code>"
+  login_success: "&aSuccessfully logged in!"
+  login_invalid: "&cInvalid or expired code!"
+  login_usage: "&cUsage: /login <code>"
+
+# Logging
+debug: true
+
+
+
+dialogs:
+  login:
+    title: "Enter Discord Code"
+    info: "Enter the 6-digit code that the Discord bot sent you."
+    input_label: "Code:"
+    buttons:
+      submit: "Enter with code"
+      discord: "Go to Discord"
+
+  wrong_code:
+    title: "Invalid Code"
+    info: "That code is incorrect. Please try again."
+    input_label: "Code:"
+    buttons:
+      submit: "Try Again"
+      discord: "Go to Discord"
+
+discord_url: "https://discord.gg/yourinvite"
