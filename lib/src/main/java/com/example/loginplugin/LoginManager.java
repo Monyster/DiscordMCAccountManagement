@@ -2,14 +2,11 @@ package com.example.loginplugin;
 
 import java.io.File;
 import java.sql.*;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
 
 public class LoginManager {
 
-	private final Set<UUID> loggedInPlayers = new HashSet<>();
 	private final Logger logger;
 
 	private Connection connection;
@@ -19,33 +16,51 @@ public class LoginManager {
 		initializeDatabase();
 	}
 
-	// ---------------- LOGIN STATE ----------------
-
-	public boolean isLoggedIn(UUID uuid) {
-		return loggedInPlayers.contains(uuid);
-	}
-
-	public void setLoggedIn(UUID uuid) {
-		loggedInPlayers.add(uuid);
-		logger.info("Player " + uuid + " logged in.");
-	}
-
-	public void remove(UUID uuid) {
-		if (loggedInPlayers.remove(uuid)) {
-			logger.info("Login state cleared for " + uuid);
-		}
-	}
-
 	// ---------------- SQLITE DATABASE ----------------
 
 	private void initializeDatabase() {
 		try {
 			File dbFile = new File("./database/superdb.db");
+
+			// Check if database file exists
+			if (!dbFile.exists()) {
+				logger.severe("Database file not found at: " + dbFile.getAbsolutePath());
+				logger.severe("Please initialize the database schema before starting the plugin!");
+				return;
+			}
+
 			connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath());
-			logger.info("SQLite database connected.");
+			logger.info("SQLite database connected at: " + dbFile.getAbsolutePath());
 		} catch (Exception e) {
 			logger.severe("Failed to initialize database: " + e.getMessage());
 			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Close database connection - call this on plugin disable
+	 */
+	public void closeDatabase() {
+		if (connection != null) {
+			try {
+				connection.close();
+				logger.info("Database connection closed.");
+			} catch (SQLException e) {
+				logger.severe("Error closing database connection: " + e.getMessage());
+				e.printStackTrace();
+			}
+		}
+	}
+
+	/**
+	 * Check if database connection is valid and available
+	 */
+	private boolean isDatabaseAvailable() {
+		try {
+			return connection != null && !connection.isClosed();
+		} catch (SQLException e) {
+			logger.severe("Error checking database connection: " + e.getMessage());
+			return false;
 		}
 	}
 
@@ -55,22 +70,29 @@ public class LoginManager {
 	 * Authorize player using the code
 	 */
 	public boolean authorizeWithCode(String username, UUID uuid, String code) {
-		if (!code.matches("^[0-9]+$")) {
-			logger.info("Not matches");
+		// Error boundary: Check database availability
+		if (!isDatabaseAvailable()) {
+			logger.severe("Database is not available for authorization!");
 			return false;
 		}
 
-		String sql = "SELECT * FROM link_codes WHERE mc_username = ? AND code = ? AND expires_at > ?";
+		// Validate code format: exactly 6 digits
+		if (code == null || !code.matches("^[0-9]{6}$")) {
+			logger.warning("Invalid code format from player " + username + ": " + (code == null ? "null" : code));
+			return false;
+		}
+
+		String sql = "SELECT * FROM link_codes WHERE LOWER(mc_username) = LOWER(?) AND code = ? AND expires_at > ?";
 
 		try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-			stmt.setString(1, username.toLowerCase()); // Problem
+			stmt.setString(1, username);
 			stmt.setString(2, code);
 			stmt.setLong(3, System.currentTimeMillis());
 
 			ResultSet rs = stmt.executeQuery();
 			if (rs.next()) {
-				// Valid code, mark player as logged in
-				setLoggedIn(uuid);
+				// Valid code found
+				logger.info("Player " + username + " authorized successfully with code");
 
 				// Update mc_uuid in database
 				try (PreparedStatement update = connection
@@ -86,10 +108,9 @@ public class LoginManager {
 					delete.executeUpdate();
 				}
 
-				logger.info("Player " + username + " authorized with code " + code);
 				return true;
 			} else {
-				logger.info("Invalid or expired code for player " + username + ": " + code);
+				logger.info("Invalid or expired code for player " + username);
 				return false;
 			}
 		} catch (SQLException e) {
@@ -103,6 +124,12 @@ public class LoginManager {
 	 * Check if a Minecraft username is registered in the accounts table.
 	 */
 	public boolean isRegistered(String username) {
+		// Error boundary: Check database availability
+		if (!isDatabaseAvailable()) {
+			logger.severe("Database is not available for registration check!");
+			return false;
+		}
+
 		String sql = "SELECT 1 FROM accounts WHERE LOWER(mc_username) = LOWER(?) LIMIT 1";
 
 		try (PreparedStatement stmt = connection.prepareStatement(sql)) {

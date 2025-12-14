@@ -27,5 +27,6 @@ tasks {
     jar {
         archiveBaseName.set("ExamplePlugin")
         archiveVersion.set("1.0.5")
+        destinationDirectory.set(file("E:\\MinecraftDev\\server\\plugins"))
     }
 }

@@ -22,9 +22,17 @@ public class LoginPlugin extends JavaPlugin {
 
 		// Register listener
 		getServer().getPluginManager().registerEvents(new ServerJoinListener(instance), this);
-//		getServer().getPluginManager().registerEvents(new UserLoginListener(instance), this);
 
 		logger.info("LoginPlugin enabled!");
+	}
+
+	@Override
+	public void onDisable() {
+		// Close database connection properly
+		if (loginManager != null) {
+			loginManager.closeDatabase();
+		}
+		logger.info("LoginPlugin disabled!");
 	}
 
 	public LoginManager getLoginManager() {

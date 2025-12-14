@@ -2,6 +2,11 @@
 # Login Plugin Configuration
 # ===========================
 
+# Server Information
+server:
+  name: "My Minecraft Server"
+  description: "Welcome to our community server!"
+
 messages:
   not_logged_in: "&cYou must login first: /login <code>"
   login_prompt: "&ePlease login: /login <code>"
@@ -12,21 +17,20 @@ messages:
 # Logging
 debug: true
 
-
-
 dialogs:
   login:
-    title: "Enter Discord Code"
-    info: "Enter the 6-digit code that the Discord bot sent you."
-    input_label: "Code:"
+    title: "Welcome to the Server"
+    instruction: "Please enter the 6-digit code from Discord bot to continue."
+    input_label: "Enter Code:"
     buttons:
-      submit: "Enter with code"
+      submit: "Submit Code"
       discord: "Go to Discord"
 
   wrong_code:
     title: "Invalid Code"
-    info: "That code is incorrect. Please try again."
-    input_label: "Code:"
+    error_message: "❌ WRONG CODE - The code you entered is incorrect or expired."
+    instruction: "Please enter the correct 6-digit code from Discord bot."
+    input_label: "Enter Code:"
     buttons:
       submit: "Try Again"
       discord: "Go to Discord"
